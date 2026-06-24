@@ -1,120 +1,144 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import datetime
-import plotly.graph_objects as go
-import time
+import streamlit.components.v1 as components
 
-# 1. Page Layout Optimization
-st.set_page_config(layout="wide", page_title="XAUUSD Pure Live Flow")
+# 1. Page Config Setup
+st.set_page_config(layout="wide", page_title="XAUUSD No-Blink Live Flow")
 
-# Mobile Screen Background Tweak
-st.markdown("<style>.reportview-container { background: #0B0E11; }</style>", unsafe_allow_html=True)
-st.title("📊 Gold Live Order Flow Terminal")
+st.markdown("""
+    <style>
+    .reportview-container { background: #0B0E11; }
+    iframe { border: none !important; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# Sidebar Dynamic Control Bars
-st.sidebar.header("⚙️ Controls")
-timeframe = st.sidebar.selectbox("Timeframe", options=["1 Minute", "5 Minutes", "1 Hour"], index=0)
-show_footprint = st.sidebar.checkbox("Show Bid/Ask Numbers", value=True)
-show_bubbles = st.sidebar.checkbox("Show Big Volume Bubbles", value=True)
+st.title("📊 ATAS/TradingView Smooth Gold Terminal")
+st.write("Live Order Flow Data Streaming (No Blinking, 100% Fluid Frame)")
 
 # ==========================================
-# 2. REAL-TIME DATA TICK GENERATOR ENGINE
+# 2. INJECTING SMOOTH JAVASCRIPT & PLOTLY ENGINE
 # ==========================================
-# Yeh function dynamic system timestamp use karke live updates simulate karta hai
-now = datetime.datetime.now()
+# Yeh HTML/JS component page ke andar bina page refresh kiye canvas level par updates karta hai.
+html_code = """
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://plot.ly"></script>
+    <style>
+        body { background-color: #0B0E11; margin: 0; padding: 0; font-family: Arial, sans-serif; overflow: hidden; }
+        #chart_div { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
 
-def generate_live_ticks():
-    periods = 8
-    # System clocks are used to shift arrays dynamically
-    slots = pd.date_range(end=now, periods=periods, freq='min')
-    
-    # Standard stable Gold base levels
-    opens = [2342.0, 2343.5, 2341.0, 2344.2, 2343.0, 2345.1, 2344.0, 2346.2]
-    
-    # Adding artificial instant current tick volatility variations
-    live_variation = np.random.uniform(-1.5, 1.5)
-    opens[-1] = opens[-1] + live_variation 
-    
-    closes = [o + np.random.uniform(-1.2, 1.2) for o in opens]
-    highs = [max(o, c) + np.random.uniform(0.3, 1.0) for o, c in zip(opens, closes)]
-    lows = [min(o, c) - np.random.uniform(0.3, 1.0) for o, c in zip(opens, closes)]
-    
-    return pd.DataFrame({'Datetime': slots, 'Open': opens, 'High': highs, 'Low': lows, 'Close': closes})
+    <div id="chart_div"></div>
 
-df = generate_live_ticks()
-
-# Processing Footprint Levels Inside Matrices
-plot_data = []
-bx, by, btext, bsize = [], [], [], []
-tick_step = 0.5 
-
-for i, row in df.iterrows():
-    t = row['Datetime']
-    prices = np.arange(round(row['Low'], 1), round(row['High'], 1) + tick_step, tick_step)
-    
-    for p in prices:
-        p = round(p, 1)
-        bid = np.random.randint(60, 480)
-        ask = np.random.randint(60, 480)
-        total_vol = bid + ask
+    <script>
+        // Generating Core Base Arrays for Gold
+        let baseTime = new Date();
+        let times = [];
+        let candles = { open: [], high: [], low: [], close: [] };
         
-        plot_data.append({'x': t, 'y': p, 'text': f"{bid}x{ask}"})
-        
-        if total_vol > 760: # Institutional threshold limit
-            bx.append(t)
-            by.append(p)
-            btext.append(f"Block Vol: {total_vol}")
-            bsize.append(total_vol / 14)
+        // Populate initial 6 bars
+        for(let i=0; i<6; i++) {
+            times.push(new Date(baseTime.getTime() - (6-i)*60000));
+            let op = 2342.0 + Math.random()*2;
+            let cl = op + (Math.random()*2 - 1);
+            candles.open.push(op);
+            candles.high.push(Math.max(op, cl) + Math.random());
+            candles.low.push(Math.min(op, cl) - Math.random());
+            candles.close.push(cl);
+        }
 
-# ==========================================
-# 3. GRAPH BUILDER (STANDARD RED/GREEN THEME)
-# ==========================================
-fig = go.Figure()
+        // Initialize Plotly Framework
+        let traceCandle = {
+            x: times, open: candles.open, high: candles.high, low: candles.low, close: candles.close,
+            type: 'candlestick', name: 'XAUUSD', opacity: 0.15,
+            increasing: {line: {color: '#26a69a'}}, decreasing: {line: {color: '#ef5350'}}
+        };
 
-# Standard Candle Representations
-fig.add_trace(go.Candlestick(
-    x=df['Datetime'], open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'],
-    increasing_line_color='#26a69a', decreasing_line_color='#ef5350', # Standard Green & Red
-    name='Gold Price', opacity=0.2
-))
+        let traceBubbles = {
+            x: [], y: [], mode: 'markers', name: 'Big Volumes',
+            marker: { size: [], color: 'purple', line: {width: 1, color: '#FFFFFF'} },
+            hoverinfo: 'text', text: []
+        };
 
-# Standard Translucent Purple Big Trade Circles Overlay
-if show_bubbles and bx:
-    fig.add_trace(go.Scatter(
-        x=bx, y=by, mode='markers',
-        marker=dict(size=bsize, color='purple', line=dict(width=1, color='#FFFFFF')),
-        text=btext, name='Big Volumes', hoverinfo='text'
-    ))
+        let layout = {
+            template: 'plotly_dark', paper_bgcolor: '#0B0E11', plot_bgcolor: '#0B0E11',
+            xaxis: { rangeslider: {visible: false}, showgrid: false },
+            yaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.02)', side: 'right' },
+            margin: { l: 10, r: 50, t: 10, b: 20 },
+            annotations: [] // Will hold Footprint Text Matrix
+        };
 
-# Basic Simple Colored Grid Clusters Injection
-if show_footprint:
-    for node in plot_data:
-        # Standard Clean Red or Green text color logic based on numbers matrix
-        is_buy_heavy = int(node['text'].split('x')[1]) > int(node['text'].split('x')[0])
-        text_color = "#26a69a" if is_buy_heavy else "#ef5350" # Pure Basic Trading Green/Red
-        
-        fig.add_annotation(
-            x=node['x'], y=node['y'], text=node['text'], showarrow=False,
-            font=dict(size=8, color=text_color, family="Arial Black"),
-            bgcolor="rgba(20, 25, 30, 0.95)", bordercolor="rgba(255,255,255,0.06)", borderwidth=1
-        )
+        Plotly.newPlot('chart_div', [traceCandle, traceBubbles], layout, {responsive: true, dragmode: 'pan'});
 
-# Layout adjustments for optimal sliding view grids on phones
-fig.update_layout(
-    template="plotly_dark", paper_bgcolor="#0B0E11", plot_bgcolor="#0B0E11",
-    xaxis_rangeslider_visible=False, height=650,
-    margin=dict(l=5, r=5, t=30, b=5), dragmode='pan'
-)
-fig.update_xaxes(showgrid=False)
-fig.update_yaxes(showgrid=True, gridcolor="rgba(255,255,255,0.02)", side="right")
+        // ==========================================
+        // SMOOTH REAL-TIME BACKGROUND TICK STREAMER
+        // ==========================================
+        setInterval(function() {
+            // 1. Update current live candlestick values dynamically without flashing screen
+            let lastIdx = candles.close.length - 1;
+            let tickChange = (Math.random() - 0.5) * 0.6;
+            
+            candles.close[lastIdx] += tickChange;
+            if(candles.close[lastIdx] > candles.high[lastIdx]) candles.high[lastIdx] = candles.close[lastIdx];
+            if(candles.close[lastIdx] < candles.low[lastIdx]) candles.low[lastIdx] = candles.close[lastIdx];
+            
+            traceCandle.high[lastIdx] = candles.high[lastIdx];
+            traceCandle.low[lastIdx] = candles.low[lastIdx];
+            traceCandle.close[lastIdx] = candles.close[lastIdx];
 
-# Displaying dynamic chart element
-st.plotly_chart(fig, use_container_width=True)
+            // 2. Compute Footprint Nodes & Big Trades inside Web Layer
+            let currentAnns = [];
+            let bx=[], by=[], bsize=[], btext=[];
+            let currentBarTime = times[lastIdx];
 
-# ==========================================
-# 4. TRADINGVIEW AUTO-REFRESH TRIGGER
-# ==========================================
-# Loop execution triggers auto rerun every 2 seconds for continuous candle animations
-time.sleep(2)
-st.rerun()
+            // Generating rows matrix for footprint nodes
+            let gridLow = Math.round(candles.low[lastIdx]*2)/2;
+            let gridHigh = Math.round(candles.high[lastIdx]*2)/2;
+
+            for(let p = gridLow; p <= gridHigh; p += 0.5) {
+                let bid = Math.floor(Math.random() * 400) + 50;
+                let ask = Math.floor(Math.random() * 400) + 50;
+                let tot = bid + ask;
+                let isBuy = ask > bid;
+
+                // Standard Color Tones
+                let txtColor = isBuy ? '#26a69a' : '#ef5350';
+
+                currentAnns.push({
+                    x: currentBarTime, y: p, text: bid + 'x' + ask,
+                    showarrow: false, font: {size: 8, color: txtColor, family: 'Arial Black'},
+                    bgcolor: 'rgba(20, 25, 30, 0.95)', bordercolor: 'rgba(255,255,255,0.05)', borderwidth: 1
+                });
+
+                // Institutional Large Order Detector Filter
+                if(tot > 680) {
+                    bx.push(currentBarTime);
+                    by.push(p);
+                    bsize.push(tot / 15);
+                    btext.push('Volume Spike: ' + tot);
+                }
+            }
+
+            traceBubbles.x = bx;
+            traceBubbles.y = by;
+            traceBubbles.marker.size = bsize;
+            traceBubbles.text = btext;
+
+            // Update Layout structure seamlessly
+            let updatedLayout = Object.assign({}, layout);
+            updatedLayout.annotations = currentAnns;
+
+            // React/Canvas update command (Pure smooth rendering)
+            Plotly.react('chart_div', [traceCandle, traceBubbles], updatedLayout);
+
+        }, 1000); // 1000ms = Har 1 second baad data smoothly change hoga bina blink kiye
+
+    </script>
+</body>
+</html>
+"""
+
+# 3. Embedding HTML components into Streamlit sandbox frame
+components.html(html_code, height=680, scrolling=False)
