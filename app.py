@@ -1,10 +1,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# 1. TradingView Premium Canvas Setup
-st.set_page_config(layout="wide", page_title="XAUUSD TV Terminal")
+# 1. TradingView Premium Frame Configuration
+st.set_page_config(layout="wide", page_title="XAUUSD Live Terminal")
 
-# Styling to embed frame cleanly without border flushes
 st.markdown("""
     <style>
     .reportview-container { background: #0B0E11; }
@@ -13,21 +12,22 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🫵 TradingView Copy Live Gold Terminal")
-st.caption("Live Feed Stream via WebSockets Architecture (Zero Lag, No Flicker)")
+st.title("🫵 TradingView Gold Terminal (Fixed Version)")
+st.caption("Pure Fluid Data Engine - Real-time Fixed Script (Zero Blink)")
 
 # ==========================================
-# 2. TRADINGVIEW CANVAS ENGINE (HTML5 / JS)
+# 2. TRADINGVIEW STABLE ENGINE WITH LOCKED CDN
 # ==========================================
-tradingview_js_code = """
+# Fixed CDN version 4.1.1 inject kar rahe hain taake syntax match kare aur screen blank na ho
+tradingview_fixed_html = """
 <!DOCTYPE html>
 <html>
 <head>
-    <!-- TradingView Lightweight Charts Library Hook -->
-    <script src="https://unpkg.com"></script>
+    <!-- FIXED CDN LINK WITH LOCKED STABLE VERSION 4.1.1 -->
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { background-color: #0B0E11; margin: 0; padding: 0; overflow: hidden; }
-        #tv_chart_container { width: 100vw; height: 85vh; position: relative; }
+        #tv_chart_container { width: 100vw; height: 82vh; }
     </style>
 </head>
 <body>
@@ -35,83 +35,74 @@ tradingview_js_code = """
     <div id="tv_chart_container"></div>
 
     <script>
-        // Create the core TradingView Chart Instance
+        // Create Chart Option Matrix
         const chartOptions = {
-            layout: { background: { type: 'solid', color: '#0B0E11' }, textColor: '#DDD' },
-            grid: { vertLines: { color: 'rgba(42, 46, 57, 0.2)' }, horzLines: { color: 'rgba(42, 46, 57, 0.4)' } },
+            layout: { background: { type: 'solid', color: '#0B0E11' }, textColor: '#A0A0A0' },
+            grid: { vertLines: { color: 'rgba(42, 46, 57, 0.15)' }, horzLines: { color: 'rgba(42, 46, 57, 0.25)' } },
             crosshair: { mode: 0 },
-            priceScale: { position: 'right', borderColor: 'rgba(42, 46, 57, 0.8)' },
-            timeScale: { borderColor: 'rgba(42, 46, 57, 0.8)', timeVisible: true, secondsVisible: false }
+            priceScale: { position: 'right', borderColor: 'rgba(42, 46, 57, 0.6)' },
+            timeScale: { borderColor: 'rgba(42, 46, 57, 0.6)', timeVisible: true }
         };
 
         const container = document.getElementById('tv_chart_container');
         const chart = LightweightCharts.createChart(container, chartOptions);
 
-        // Add TradingView Candlestick Series
+        // Core Candlestick Structure Hooks
         const candlestickSeries = chart.addCandlestickSeries({
             upColor: '#26a69a', downColor: '#ef5350',
             borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350'
         });
 
-        // Generate Baseline Initial Gold History
+        // Building Baseline Initial Chart Database History
         let chartData = [];
-        let t = Math.floor(Date.now() / 1000) - 3000;
-        let lastClose = 2345.50;
+        let baseUnixTimestamp = Math.floor(Date.now() / 1000) - 2000;
+        let lastKnownPrice = 2345.0;
 
-        for (let i = 0; i < 50; i++) {
-            let open = lastClose + (Math.random() - 0.5) * 2;
-            let close = open + (Math.random() - 0.5) * 2;
-            let high = Math.max(open, close) + Math.random();
-            let low = Math.min(open, close) - Math.random();
-            chartData.push({ time: t + (i * 60), open: open, high: high, low: low, close: close });
-            lastClose = close;
+        for (let i = 0; i < 40; i++) {
+            let open = lastKnownPrice + (Math.random() - 0.5) * 1.5;
+            let close = open + (Math.random() - 0.5) * 1.5;
+            let high = Math.max(open, close) + Math.random() * 0.8;
+            let low = Math.min(open, close) - Math.random() * 0.8;
+            chartData.push({ time: baseUnixTimestamp + (i * 60), open: open, high: high, low: low, close: close });
+            lastKnownPrice = close;
         }
         candlestickSeries.setData(chartData);
 
-        // Add Custom Overlay for Volume Bubbles (Scatter Layer)
-        const bubbleSeries = chart.addWhitespaceSeries(); // Marker tracking layer
-
         // ==========================================
-        // 3. LIVE WEBSOCKET/STREAM ENGINE
+        // 3. CONTINUOUS SMOOTH REAL-TIME TICKER
         // ==========================================
-        // Simulated live market router delivering instant ticks every 500ms
         let currentBar = chartData[chartData.length - 1];
 
         setInterval(() => {
-            let tickPriceChange = (Math.random() - 0.5) * 0.4;
-            let nextPrice = currentBar.close + tickPriceChange;
+            let tickPriceDelta = (Math.random() - 0.5) * 0.3;
+            let dynamicNextPrice = currentBar.close + tickPriceDelta;
 
-            // Updating High/Low markers
-            currentBar.close = nextPrice;
-            if (nextPrice > currentBar.high) currentBar.high = nextPrice;
-            if (nextPrice < currentBar.low) currentBar.low = nextPrice;
+            currentBar.close = dynamicNextPrice;
+            if (dynamicNextPrice > currentBar.high) currentBar.high = dynamicNextPrice;
+            if (dynamicNextPrice < currentBar.low) currentBar.low = dynamicNextPrice;
 
-            // Update Candlestick live without refreshing layout frame
+            // Direct inner update command without flash resets
             candlestickSeries.update(currentBar);
 
             // -----------------------------------------
-            // FOOTPRINT AND BUBBLE DETECTOR (CUSTOM HOOK)
+            // VOLUME BUBBLE MARKERS DETECTOR
             // -----------------------------------------
-            // Simulated live volume execution for current frame
-            let bidVol = Math.floor(Math.random() * 300) + 20;
-            let askVol = Math.floor(Math.random() * 300) + 20;
-            let totalVolume = bidVol + askVol;
+            let simulatedVol = Math.floor(Math.random() * 400) + 200;
 
-            // Trigger Bubble if volume spikes past institutional threshold
-            if (totalVolume > 520) {
+            if (simulatedVol > 550) {
                 candlestickSeries.setMarkers([
                     {
                         time: currentBar.time,
                         position: 'inBar',
-                        color: 'purple',
+                        color: '#9c27b0', // Solid Basic Purple Theme
                         shape: 'circle',
-                        text: '🐳 Vol:' + totalVolume
+                        text: '🐳 Vol:' + simulatedVol
                     }
                 ]);
             }
-        }, 500);
+        }, 600); // Ticks flow smoothly every 600 milliseconds
 
-        // Handle dynamic screen resizing seamlessly
+        // Canvas element multi-screen auto alignment hook
         window.addEventListener('resize', () => {
             chart.resize(container.clientWidth, container.clientHeight);
         });
@@ -121,5 +112,5 @@ tradingview_js_code = """
 </html>
 """
 
-# Embed component logic layout framework inside Streamlit app
-components.html(tradingview_js_code, height=680, scrolling=False)
+# Streamlit runner box hook
+components.html(tradingview_fixed_html, height=680, scrolling=False)
