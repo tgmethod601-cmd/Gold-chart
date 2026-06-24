@@ -3,74 +3,51 @@ import pandas as pd
 import numpy as np
 import datetime
 import plotly.graph_objects as go
+import time
 
-# 1. Premium Mobile Layout Configuration
-st.set_page_config(layout="wide", page_title="XAUUSD Live Order Flow")
+# 1. Page Layout Optimization
+st.set_page_config(layout="wide", page_title="XAUUSD Pure Live Flow")
 
-# Custom Dark CSS for ATAS / TradingView Premium Feeling
-st.markdown("""
-    <style>
-    .reportview-container { background: #0A0F14; }
-    .stCheckbox { color: #FFFFFF !important; }
-    </style>
-    """, unsafe_allow_html=True)
+# Mobile Screen Background Tweak
+st.markdown("<style>.reportview-container { background: #0B0E11; }</style>", unsafe_allow_html=True)
+st.title("📊 Gold Live Order Flow Terminal")
 
-st.title("🦅 Real-Time Gold Order Flow Engine (TradingView Style)")
-
-# ==========================================
-# 2. SIDEBAR CONTROLS (TRADINGVIEW CONTROLS)
-# ==========================================
-st.sidebar.header("⚙️ Chart Settings")
-
-# Timeframe Selector like TradingView
-timeframe = st.sidebar.selectbox(
-    "Select Timeframe",
-    options=["1 Minute", "5 Minutes", "15 Minutes", "1 Hour"],
-    index=0
-)
-
-st.sidebar.markdown("---")
-st.sidebar.header("🛠️ Indicators Panel")
-
-# User can dynamically turn indicators ON or OFF himself
-show_footprint = st.sidebar.checkbox("Show Bid/Ask Footprint Numbers", value=True)
-show_bubbles = st.sidebar.checkbox("Show Institutional Volume Bubbles", value=True)
-
-# User adjustable bubble threshold sensitivity
-bubble_threshold = st.sidebar.slider("Bubble Volume Sensitivity", min_value=500, max_value=1500, value=750, step=50)
-
-# Refresh Button for Live Feed Tick updates
-if st.sidebar.button("🔄 Refresh Live Market Data"):
-    st.rerun()
+# Sidebar Dynamic Control Bars
+st.sidebar.header("⚙️ Controls")
+timeframe = st.sidebar.selectbox("Timeframe", options=["1 Minute", "5 Minutes", "1 Hour"], index=0)
+show_footprint = st.sidebar.checkbox("Show Bid/Ask Numbers", value=True)
+show_bubbles = st.sidebar.checkbox("Show Big Volume Bubbles", value=True)
 
 # ==========================================
-# 3. LIVE DATA SIMULATOR (HIGH INTENSITY SECONDS DATA)
+# 2. REAL-TIME DATA TICK GENERATOR ENGINE
 # ==========================================
-# Generates live data mimicking current time engine
+# Yeh function dynamic system timestamp use karke live updates simulate karta hai
 now = datetime.datetime.now()
-tf_map = {"1 Minute": "1min", "5 Minutes": "5min", "15 Minutes": "15min", "1 Hour": "1h"}
 
-@st.cache_data(ttl=2) # Auto clears cache every 2 seconds for live tick updates
-def get_live_gold_data(tf):
-    np.random.seed(int(now.strftime("%s")) // 60) # Live seed rotates every minute
-    periods = 10
-    slots = pd.date_range(end=now, periods=periods, freq='min' if tf=="1 Minute" else '5min')
+def generate_live_ticks():
+    periods = 8
+    # System clocks are used to shift arrays dynamically
+    slots = pd.date_range(end=now, periods=periods, freq='min')
     
-    # Gold baseline spot price
-    base_price = 2345.0
-    opens = [base_price + np.random.uniform(-3, 3) for _ in range(periods)]
-    closes = [o + np.random.uniform(-2, 2) for o in opens]
-    highs = [max(o, c) + np.random.uniform(0.5, 2) for o, c in zip(opens, closes)]
-    lows = [min(o, c) - np.random.uniform(0.5, 2) for o, c in zip(opens, closes)]
+    # Standard stable Gold base levels
+    opens = [2342.0, 2343.5, 2341.0, 2344.2, 2343.0, 2345.1, 2344.0, 2346.2]
+    
+    # Adding artificial instant current tick volatility variations
+    live_variation = np.random.uniform(-1.5, 1.5)
+    opens[-1] = opens[-1] + live_variation 
+    
+    closes = [o + np.random.uniform(-1.2, 1.2) for o in opens]
+    highs = [max(o, c) + np.random.uniform(0.3, 1.0) for o, c in zip(opens, closes)]
+    lows = [min(o, c) - np.random.uniform(0.3, 1.0) for o, c in zip(opens, closes)]
     
     return pd.DataFrame({'Datetime': slots, 'Open': opens, 'High': highs, 'Low': lows, 'Close': closes})
 
-df = get_live_gold_data(timeframe)
+df = generate_live_ticks()
 
-# Process footprints inside data matrix
+# Processing Footprint Levels Inside Matrices
 plot_data = []
 bx, by, btext, bsize = [], [], [], []
-tick_step = 0.5
+tick_step = 0.5 
 
 for i, row in df.iterrows():
     t = row['Datetime']
@@ -78,55 +55,66 @@ for i, row in df.iterrows():
     
     for p in prices:
         p = round(p, 1)
-        bid = np.random.randint(60, 600)
-        ask = np.random.randint(60, 600)
+        bid = np.random.randint(60, 480)
+        ask = np.random.randint(60, 480)
         total_vol = bid + ask
         
         plot_data.append({'x': t, 'y': p, 'text': f"{bid}x{ask}"})
         
-        if total_vol > bubble_threshold:
+        if total_vol > 760: # Institutional threshold limit
             bx.append(t)
             by.append(p)
-            btext.append(f"🐳 Institutional Block: {total_vol}")
-            bsize.append(total_vol / 12)
+            btext.append(f"Block Vol: {total_vol}")
+            bsize.append(total_vol / 14)
 
 # ==========================================
-# 4. TRADINGVIEW / ATAS INTERACTIVE PLOT
+# 3. GRAPH BUILDER (STANDARD RED/GREEN THEME)
 # ==========================================
 fig = go.Figure()
 
-# Base Candlestick Structure
+# Standard Candle Representations
 fig.add_trace(go.Candlestick(
     x=df['Datetime'], open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'],
-    name=f'XAUUSD {timeframe}', opacity=0.25
+    increasing_line_color='#26a69a', decreasing_line_color='#ef5350', # Standard Green & Red
+    name='Gold Price', opacity=0.2
 ))
 
-# CONDITIONAL ADDITION: Big Volume Bubbles Indicator
+# Standard Translucent Purple Big Trade Circles Overlay
 if show_bubbles and bx:
     fig.add_trace(go.Scatter(
         x=bx, y=by, mode='markers',
-        marker=dict(size=bsize, color='rgba(156, 39, 176, 0.75)', line=dict(width=1.5, color='#FFFFFF')),
-        text=btext, name='Big Volume Bubbles', hoverinfo='text'
+        marker=dict(size=bsize, color='purple', line=dict(width=1, color='#FFFFFF')),
+        text=btext, name='Big Volumes', hoverinfo='text'
     ))
 
-# CONDITIONAL ADDITION: Footprint Cluster Overlay
+# Basic Simple Colored Grid Clusters Injection
 if show_footprint:
     for node in plot_data:
+        # Standard Clean Red or Green text color logic based on numbers matrix
+        is_buy_heavy = int(node['text'].split('x')[1]) > int(node['text'].split('x')[0])
+        text_color = "#26a69a" if is_buy_heavy else "#ef5350" # Pure Basic Trading Green/Red
+        
         fig.add_annotation(
             x=node['x'], y=node['y'], text=node['text'], showarrow=False,
-            font=dict(size=8, color="#00FF66" if "8" in node['text'] else "#FF5252", family="Courier New"),
-            bgcolor="rgba(10, 15, 20, 0.92)", bordercolor="rgba(255,255,255,0.06)", borderwidth=1
+            font=dict(size=8, color=text_color, family="Arial Black"),
+            bgcolor="rgba(20, 25, 30, 0.95)", bordercolor="rgba(255,255,255,0.06)", borderwidth=1
         )
 
-# Layout Configurations for smooth dragging/zooming on phones
+# Layout adjustments for optimal sliding view grids on phones
 fig.update_layout(
-    template="plotly_dark", paper_bgcolor="#0A0F14", plot_bgcolor="#0A0F14",
-    xaxis_rangeslider_visible=False, height=700,
-    margin=dict(l=10, r=10, t=30, b=10),
-    dragmode='pan' # Multi-touch pinch zoom support for mobile screens
+    template="plotly_dark", paper_bgcolor="#0B0E11", plot_bgcolor="#0B0E11",
+    xaxis_rangeslider_visible=False, height=650,
+    margin=dict(l=5, r=5, t=30, b=5), dragmode='pan'
 )
 fig.update_xaxes(showgrid=False)
-fig.update_yaxes(showgrid=True, gridcolor="rgba(255,255,255,0.03)", side="right") # TradingView style right-side axis
+fig.update_yaxes(showgrid=True, gridcolor="rgba(255,255,255,0.02)", side="right")
 
-# Render Chart inside Streamlit platform
+# Displaying dynamic chart element
 st.plotly_chart(fig, use_container_width=True)
+
+# ==========================================
+# 4. TRADINGVIEW AUTO-REFRESH TRIGGER
+# ==========================================
+# Loop execution triggers auto rerun every 2 seconds for continuous candle animations
+time.sleep(2)
+st.rerun()
